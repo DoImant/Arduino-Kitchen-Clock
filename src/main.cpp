@@ -18,7 +18,7 @@
 #include "AlarmTone.hpp"
 
 // #define DISPLAY_Y32       // Remove the comment if the display has only 32 instead of 64 pixel lines
-#define MINUTES_DEFAULT   // Remove the comment if you want the time setting to start with the minutes.
+//#define MINUTES_DEFAULT   // Remove the comment if you want the time setting to start with the minutes.
 
 //
 // gobal constants
@@ -67,7 +67,7 @@ constexpr uint16_t NOTE_A6 {1760};
 //
 // Global objects / variables
 //
-#define MINUTES_DEFAULT
+
 struct InputState {
   enum class state : uint8_t { seconds = 0, minutes };
   RotaryEncoder encoder {PIN_IN1, PIN_IN2, RotaryEncoder::LatchMode::FOUR3};
@@ -167,7 +167,7 @@ void loop() {
       break;
     case KitchenTimerState::alarm:
       alarm.playAlarm();
-      if (btn.tick() != ButtonState::notPressed) {   // Switch alarm off with encoder wakeupPin
+      if (btn.tick() != ButtonState::notPressed) {   // Switch alarm off with encoder button
         setDisplayForInput(ktTimer, input);
       }
       if (askEncoder(input.encoder, ktTimer)) {   // Switch alarm off with encoder rotation
