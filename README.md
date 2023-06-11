@@ -14,7 +14,7 @@ This version is customized to an ATtiny 1604.
 
 ## Circuit diagram
 
-[Sheet](https://github.com/DoImant/kitchen-clock/docu/kitchen_clock.pdf)
+[Sheet](https://github.com/DoImant/Arduino-Kitchen-Clock/blob/main/docu/kitchen_clock.pdf)
 
 Breadboard view\
-![breadboard circuit](https://github.com/DoImant/kitchen-clock/docu/kitchen_clock.jpg?raw=true)
+![breadboard circuit](https://github.com/DoImant/Arduino-Kitchen-Clock/blob/main/docu/kitchen_clock.jpg?raw=true)
