@@ -18,7 +18,7 @@
 #include "AlarmTone.hpp"
 
 // #define DISPLAY_Y32       // Remove the comment if the display has only 32 instead of 64 pixel lines
-//#define MINUTES_DEFAULT   // Remove the comment if you want the time setting to start with the minutes.
+// #define MINUTES_DEFAULT   // Remove the comment if you want the time setting to start with the minutes.
 
 //
 // gobal constants
@@ -50,15 +50,15 @@ constexpr uint8_t LINE_Y {DISPLAY_Y + 2};        // Line below the numbers
 constexpr uint8_t LINE_WIDTH {FONT_WIDTH * 2};   // Line length = font width * 2
 
 #if defined(__AVR_ATtiny1604__)
-constexpr uint8_t PIN_BTN {0};   // SW on rotary encoder
-constexpr uint8_t PIN_IN1 {1};   // DT   ---- " ----
-constexpr uint8_t PIN_IN2 {2};   // CLK  ---- " ----
-constexpr uint8_t PIN_ALARM {3};
+constexpr uint8_t PIN_BTN {0};       // SW on rotary encoder
+constexpr uint8_t PIN_IN1 {1};       // DT   ---- " ----
+constexpr uint8_t PIN_IN2 {2};       // CLK  ---- " ----
+constexpr uint8_t PIN_ALARM {3};     // Buzzer
 #else
-constexpr uint8_t PIN_BTN {3};   // SW on rotary encoder
-constexpr uint8_t PIN_IN1 {4};   // DT   ---- " ----
-constexpr uint8_t PIN_IN2 {5};   // CLK  ---- " ----
-constexpr uint8_t PIN_ALARM {13};
+constexpr uint8_t PIN_BTN {3};      // SW on rotary encoder
+constexpr uint8_t PIN_IN1 {4};      // DT   ---- " ----
+constexpr uint8_t PIN_IN2 {5};      // CLK  ---- " ----
+constexpr uint8_t PIN_ALARM {13};   // Buzzer
 #endif
 
 constexpr uint16_t NOTE_F6 {1397};
@@ -112,21 +112,10 @@ void setup(void) {
   // Serial.begin(115200);
 #if defined(__AVR_ATtiny1604__)
   // Turn on all the pullups for minimal power in sleep
-  PORTA.DIR = 0;                       // All PORTA pins inputs
-  PORTA.PIN0CTRL = PORT_PULLUPEN_bm;   // UPDI
-  PORTA.PIN1CTRL = PORT_PULLUPEN_bm;
-  PORTA.PIN2CTRL = PORT_PULLUPEN_bm;
-  PORTA.PIN3CTRL = PORT_PULLUPEN_bm;
-  PORTA.PIN4CTRL = PORT_PULLUPEN_bm;
-  PORTA.PIN5CTRL = PORT_PULLUPEN_bm;
-  PORTA.PIN6CTRL = PORT_PULLUPEN_bm;
-  PORTA.PIN7CTRL = PORT_PULLUPEN_bm;
-
-  PORTB.DIR = 0;
-  PORTB.PIN0CTRL = PORT_PULLUPEN_bm;   // UPDI
-  PORTB.PIN1CTRL = PORT_PULLUPEN_bm;
-  PORTB.PIN2CTRL = PORT_PULLUPEN_bm;
-  PORTB.PIN3CTRL = PORT_PULLUPEN_bm;
+  PORTA.DIR = 0;   // All PORTA pins inputs
+  for (uint8_t pin = 0; pin < 8; ++pin) { (&PORTA.PIN0CTRL)[pin] = PORT_PULLUPEN_bm; }
+  PORTB.DIR = 0;   // All PORTB pins inputs
+  for (uint8_t pin = 0; pin < 4; ++pin) { (&PORTB.PIN0CTRL)[pin] = PORT_PULLUPEN_bm; }
 
   // ADC is not required so switch it off
   ADC0.CTRLA &= ~ADC_ENABLE_bm;
