@@ -4,7 +4,7 @@
 /// @brief Kitchen clock control
 ///
 /// @date 2023-06-10
-/// @version 0.1
+/// @version 1.0.0
 ///
 /// @copyright Copyright (c) 2023
 ///
