@@ -6,7 +6,7 @@ Turning the encoder sets minutes and seconds. Switching between the two time uni
 
 When the time has elapsed, an alarm sounds. By short pressure on the encoder button, or by turning, the alarm tone is switched off again. 
 
-If no input is made at the clock, the circuit is put into a sleep mode to save power. The power consumption in sleep mode is about 7.6µA. To end this, a short press on the encoder button is also sufficient.
+If no input is made at the clock, the circuit is put into a sleep mode to save power. The power consumption in sleep mode is about < 10µA. To end this, a short press on the encoder button is also sufficient.
 
 The program in principle runs on contoller boards with an ATMega328 chip and on ATtinys from the tinyAVR series with more than 14kb Flash and 800 bytes RAM.
 
