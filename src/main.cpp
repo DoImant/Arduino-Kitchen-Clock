@@ -26,7 +26,7 @@
 
 // If the time is running ahead or behind, the inaccuracy of the oscillator can be compensated
 // somewhat via this "SECOND" value.
-constexpr uint16_t SECOND {998};   // 1000ms = 1 Second
+constexpr uint16_t SECOND {997};   // 1000ms = 1 Second
 constexpr uint16_t TIMEOUT {10000};
 
 constexpr uint8_t BUFFERLENGTH {6};   // 5 characters + end-of-string character '\0'.
@@ -86,6 +86,9 @@ U8G2_SSD1306_128X64_NONAME_2_HW_I2C u8g2(U8G2_R0);
 #else
 U8G2_SSD1306_128X32_UNIVISION_2_HW_I2C u8g2(U8G2_R0);
 #endif
+
+enum class Underline : byte {no, yes};
+
 using namespace Btn;
 ButtonSL btn {PIN_BTN};
 TimerHelper wait;   // This class is defined in AlarmTone.hpp
@@ -100,7 +103,7 @@ void powerDown(uint8_t wakeupPin);
 KitchenTimerState runTimer(KitchenTimer &);
 bool askEncoder(RotaryEncoder &, KitchenTimer &);
 bool processInput(KitchenTimer &, InputState &);
-void displayTime(KitchenTimer &, bool);
+void displayTime(KitchenTimer &, Underline);
 void setDisplayForInput(KitchenTimer &kT, InputState &iS);
 void askRtButton(ButtonSL &, KitchenTimer &, InputState &);
 
@@ -210,7 +213,7 @@ KitchenTimerState runTimer(KitchenTimer &kT) {
       case false: kT.start(); break;
       case true: kT.setState(KitchenTimerState::alarm); break;
     }
-    displayTime(kT, false);
+    displayTime(kT, Underline::no);
   }
   return kT.getState();
 }
@@ -250,11 +253,11 @@ bool processInput(KitchenTimer &kT, InputState &iS) {
       case InputState::state::minutes: kT.setUnitMinutes(); break;
     }
     iS.lastState = iS.currentState;
-    displayTime(kT, true);
+    displayTime(kT, Underline::yes);
   } else if (askEncoder(iS.encoder, ktTimer)) {
     switch (ktTimer.getState()) {
       case KitchenTimerState::alarm: ktTimer.setState(KitchenTimerState::off); break;
-      default: displayTime(kT, true); break;
+      default: displayTime(kT, Underline::yes); break;
     }
   } else {
     encoderActuated = false;
@@ -283,13 +286,13 @@ void setDisplayForInput(KitchenTimer &kT, InputState &iS) {
 /// @param showLine If true, a line will be displayed under the digits active
 ///                 for the input. If false, then no line is displayed.
 //////////////////////////////////////////////////////////////////////////////
-void displayTime(KitchenTimer &kT, bool showLine) {
+void displayTime(KitchenTimer &kT, Underline underline) {
   char charBuffer[BUFFERLENGTH];
   sprintf(charBuffer, "%02d:%02d", kT.getMinutes(), kT.getSeconds());
   u8g2.firstPage();
   do {
     u8g2.drawStr(DISPLAY_X, DISPLAY_Y, charBuffer);   // Output string on the display.
-    if (showLine) {
+    if (underline == Underline::yes) {
       if (kT.getActiveUnit() == ActiveUnit::seconds) {
         u8g2.drawHLine(SECONDS_LINE_X, LINE_Y, LINE_WIDTH);
       } else {
@@ -318,7 +321,7 @@ void askRtButton(ButtonSL &b, KitchenTimer &kT, InputState &iS) {
           case KitchenTimerState::off:
             kT.setState(KitchenTimerState::active);
             kT.setUnitSeconds();
-            displayTime(kT, false);   // Delete underline
+            displayTime(kT, Underline::no);   // Delete underline
             kT.start();               // Start the countdown
             break;
           case KitchenTimerState::alarm: break;
