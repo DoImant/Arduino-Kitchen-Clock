@@ -50,10 +50,10 @@ constexpr uint8_t LINE_Y {DISPLAY_Y + 2};        // Line below the numbers
 constexpr uint8_t LINE_WIDTH {FONT_WIDTH * 2};   // Line length = font width * 2
 
 #if defined(__AVR_ATtiny1604__)
-constexpr uint8_t PIN_BTN {0};       // SW on rotary encoder
-constexpr uint8_t PIN_IN1 {1};       // DT   ---- " ----
-constexpr uint8_t PIN_IN2 {2};       // CLK  ---- " ----
-constexpr uint8_t PIN_ALARM {3};     // Buzzer
+constexpr uint8_t PIN_BTN {0};     // SW on rotary encoder
+constexpr uint8_t PIN_IN1 {1};     // DT   ---- " ----
+constexpr uint8_t PIN_IN2 {2};     // CLK  ---- " ----
+constexpr uint8_t PIN_ALARM {3};   // Buzzer
 #else
 constexpr uint8_t PIN_BTN {3};      // SW on rotary encoder
 constexpr uint8_t PIN_IN1 {4};      // DT   ---- " ----
@@ -87,7 +87,7 @@ U8G2_SSD1306_128X64_NONAME_2_HW_I2C u8g2(U8G2_R0);
 U8G2_SSD1306_128X32_UNIVISION_2_HW_I2C u8g2(U8G2_R0);
 #endif
 
-enum class Underline : byte {no, yes};
+enum class Underline : byte { no, yes };
 
 using namespace Btn;
 ButtonSL btn {PIN_BTN};
@@ -283,8 +283,8 @@ void setDisplayForInput(KitchenTimer &kT, InputState &iS) {
 ///        on the display.
 ///
 /// @param kT Reference on kitchen timer object
-/// @param showLine If true, a line will be displayed under the digits active
-///                 for the input. If false, then no line is displayed.
+/// @param underline If Underline::yes, a line will be displayed under the digits 
+///                  active for the input. If "no", then no line is displayed.
 //////////////////////////////////////////////////////////////////////////////
 void displayTime(KitchenTimer &kT, Underline underline) {
   char charBuffer[BUFFERLENGTH];
@@ -322,7 +322,7 @@ void askRtButton(ButtonSL &b, KitchenTimer &kT, InputState &iS) {
             kT.setState(KitchenTimerState::active);
             kT.setUnitSeconds();
             displayTime(kT, Underline::no);   // Delete underline
-            kT.start();               // Start the countdown
+            kT.start();                       // Start the countdown
             break;
           case KitchenTimerState::alarm: break;
         }
