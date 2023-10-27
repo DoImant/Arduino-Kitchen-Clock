@@ -113,6 +113,8 @@ void askRtButton(ButtonSL &, KitchenTimer &, InputState &);
 //////////////////////////////////////////////////////////////////////////////
 void setup(void) {
   // Serial.begin(115200);
+
+  // Prepare controller for sleep mode
 #if defined(__AVR_ATtiny1604__)
   // Turn on all the pullups for minimal power in sleep
   PORTA.DIR = 0;   // All PORTA pins inputs
@@ -125,6 +127,9 @@ void setup(void) {
 #else
   bitClear(ADCSRA, ADEN);
 #endif
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);   // Set sleep mode to POWER DOWN mode
+  sleep_enable();                        // Enable sleep mode, but not yet
+  // prepare sleepmode ready
 
   u8g2.begin();
   u8g2.setFont(u8g2_font_logisoso42_tn);   // 24 Width 51 Hight
@@ -132,9 +137,6 @@ void setup(void) {
   btn.begin();
   btn.releaseOn();
   btn.setDebounceTime_ms(100);
-
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);   // Set sleep mode to POWER DOWN mode
-  sleep_enable();                        // Enable sleep mode, but not yet
 }
 
 //////////////////////////////////////////////////////////////////////////////
