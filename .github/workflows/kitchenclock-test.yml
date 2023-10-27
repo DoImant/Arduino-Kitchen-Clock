@@ -23,7 +23,7 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
-      - name: Build PlatformIO examples
-        run: pio ci --board=nanoatmega328 --board=ATtiny1604
+      - name: Build PlatformIO main program
+        run: pio ci --lib="." --board=nanoatmega328 --board=ATtiny1604
         env:
           PLATFORMIO_CI_SRC: ${{ matrix.example }}
