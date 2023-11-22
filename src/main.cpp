@@ -17,7 +17,7 @@
 #include "KitchenTimer.hpp"
 #include "AlarmTone.hpp"
 
-// #define SH1106   // Remove the comment if the display has 1,3"
+// #define SH1106            // Remove the comment if the display has 1,3"
 // #define DISPLAY_Y32       // Remove the comment if the display has only 32 instead of 64 pixel lines
 
 // #define MINUTES_DEFAULT   // Remove the comment if you want the time setting to start with the minutes.
@@ -32,23 +32,24 @@ constexpr uint16_t SECOND {997};   // 1000ms = 1 Second
 constexpr uint16_t TIMEOUT {10000};
 
 constexpr uint8_t BUFFERLENGTH {6};   // 5 characters + end-of-string character '\0'.
-constexpr uint8_t DISPLAY_MAX_X {128};
+constexpr uint8_t DISPLAY_MAX_X {127};
 
 #ifndef DISPLAY_Y32
-// u8g2_font_logisoso42_tn   // 24 Width 26 Height
-constexpr uint8_t DISPLAY_MAX_Y {64};
+// u8g2_font_logisoso42_tn   // 24 Width 51 Height
+constexpr uint8_t DISPLAY_MAX_Y {63};
 constexpr uint8_t FONT_WIDTH {24};
 constexpr uint8_t FONT_HIGHT {51};
 #else
 // Font u8g2_font_freedoomr25_mn   // 19 Width 26 Height
-constexpr uint8_t DISPLAY_MAX_Y {32};
+constexpr uint8_t DISPLAY_MAX_Y {31};
 constexpr uint8_t FONT_WIDTH {19};
 constexpr uint8_t FONT_HIGHT {26};
 #endif
 
 // The following display values are calculated from the upper four values. No change necessary.
 constexpr uint8_t DISPLAY_X {(DISPLAY_MAX_X - FONT_WIDTH * (BUFFERLENGTH - 1)) / 2};   // Column = X Coordinate
-constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_HIGHT) / 2};                        // Row = Y coordinate
+// constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_HIGHT) / 2};                        // Row = Y coordinate
+constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_HIGHT) / 2};   // Row = Y coordinate
 constexpr uint8_t MINUTES_LINE_X {DISPLAY_X};   // LINE = Coordinates for the line under minute and second digits
 constexpr uint8_t SECONDS_LINE_X {DISPLAY_X + FONT_WIDTH * 3};
 constexpr uint8_t LINE_Y {DISPLAY_Y + 2};        // Line below the numbers
@@ -95,7 +96,7 @@ using OLED_DP = U8G2_SH1106_128X64_NONAME_1_HW_I2C;   // 1,3 Inch SH1106
 #ifndef DISPLAY_Y32
 using OLED_DP = U8G2_SSD1306_128X64_NONAME_1_HW_I2C;   // 0,96 Inch SSD1306
 #else
-using OLED_DP = U8G2_SSD1306_128X32_UNIVISION_1_HW_I2C;  // 0,91 Inch SSD1306
+using OLED_DP = U8G2_SSD1306_128X32_UNIVISION_1_HW_I2C;   // 0,91 Inch SSD1306
 #endif
 #endif
 
