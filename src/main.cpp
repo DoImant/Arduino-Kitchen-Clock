@@ -17,7 +17,9 @@
 #include "KitchenTimer.hpp"
 #include "AlarmTone.hpp"
 
+// #define SH1106   // Remove the comment if the display has 1,3"
 // #define DISPLAY_Y32       // Remove the comment if the display has only 32 instead of 64 pixel lines
+
 // #define MINUTES_DEFAULT   // Remove the comment if you want the time setting to start with the minutes.
 
 //
@@ -31,19 +33,22 @@ constexpr uint16_t TIMEOUT {10000};
 
 constexpr uint8_t BUFFERLENGTH {6};   // 5 characters + end-of-string character '\0'.
 constexpr uint8_t DISPLAY_MAX_X {128};
-#ifndef DISPLAY_Y32
-constexpr uint8_t DISPLAY_MAX_Y {64};
-#else
-constexpr uint8_t DISPLAY_MAX_Y {32};
-#endif
 
-// Font u8g2_font_freedoomr25_mn   // 19 Width 26 Height
+#ifndef DISPLAY_Y32
+// u8g2_font_logisoso42_tn   // 24 Width 26 Height
+constexpr uint8_t DISPLAY_MAX_Y {64};
 constexpr uint8_t FONT_WIDTH {24};
 constexpr uint8_t FONT_HIGHT {51};
+#else
+// Font u8g2_font_freedoomr25_mn   // 19 Width 26 Height
+constexpr uint8_t DISPLAY_MAX_Y {32};
+constexpr uint8_t FONT_WIDTH {19};
+constexpr uint8_t FONT_HIGHT {26};
+#endif
 
 // The following display values are calculated from the upper four values. No change necessary.
 constexpr uint8_t DISPLAY_X {(DISPLAY_MAX_X - FONT_WIDTH * (BUFFERLENGTH - 1)) / 2};   // Column = X Coordinate
-constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_WIDTH) / 2};                        // Row = Y coordinate
+constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_HIGHT) / 2};                        // Row = Y coordinate
 constexpr uint8_t MINUTES_LINE_X {DISPLAY_X};   // LINE = Coordinates for the line under minute and second digits
 constexpr uint8_t SECONDS_LINE_X {DISPLAY_X + FONT_WIDTH * 3};
 constexpr uint8_t LINE_Y {DISPLAY_Y + 2};        // Line below the numbers
@@ -81,11 +86,20 @@ struct InputState {
   state currentState {defaultState};
 } input;
 
-#ifndef DISPLAY_Y32
-U8G2_SSD1306_128X64_NONAME_2_HW_I2C u8g2(U8G2_R0);
+// initialize OLED
+// Controller: SH1106 or SSD1306
+// Page buffer mode is used
+#ifdef SH1106
+using OLED_DP = U8G2_SH1106_128X64_NONAME_1_HW_I2C;   // 1,3 Inch SH1106
 #else
-U8G2_SSD1306_128X32_UNIVISION_2_HW_I2C u8g2(U8G2_R0);
+#ifndef DISPLAY_Y32
+using OLED_DP = U8G2_SSD1306_128X64_NONAME_1_HW_I2C;   // 0,96 Inch SSD1306
+#else
+using OLED_DP = U8G2_SSD1306_128X32_UNIVISION_1_HW_I2C;  // 0,91 Inch SSD1306
 #endif
+#endif
+
+OLED_DP u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
 
 enum class Underline : byte { no, yes };
 
@@ -132,7 +146,11 @@ void setup(void) {
   // prepare sleepmode ready
 
   u8g2.begin();
+#ifndef DISPLAY_Y32
   u8g2.setFont(u8g2_font_logisoso42_tn);   // 24 Width 51 Hight
+#else
+  u8g2.setFont(u8g2_font_freedoomr25_mn);   // 19 Width 26 Hight
+#endif
 
   btn.begin();
   btn.releaseOn();
@@ -285,7 +303,7 @@ void setDisplayForInput(KitchenTimer &kT, InputState &iS) {
 ///        on the display.
 ///
 /// @param kT Reference on kitchen timer object
-/// @param underline If Underline::yes, a line will be displayed under the digits 
+/// @param underline If Underline::yes, a line will be displayed under the digits
 ///                  active for the input. If "no", then no line is displayed.
 //////////////////////////////////////////////////////////////////////////////
 void displayTime(KitchenTimer &kT, Underline underline) {
