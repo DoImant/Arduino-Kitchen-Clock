@@ -40,6 +40,8 @@ constexpr uint8_t DISPLAY_MAX_Y {63};
 constexpr uint8_t FONT_WIDTH {24};
 constexpr uint8_t FONT_HIGHT {51};
 #else
+// Font u8g2_font_inb21mn          // 18 Width 27 High      Another option
+// Font u8g2_font_logisoso20_tn    // 13 Width 26 High      Another option
 // Font u8g2_font_freedoomr25_mn   // 19 Width 26 Height
 constexpr uint8_t DISPLAY_MAX_Y {31};
 constexpr uint8_t FONT_WIDTH {19};
@@ -48,8 +50,7 @@ constexpr uint8_t FONT_HIGHT {26};
 
 // The following display values are calculated from the upper four values. No change necessary.
 constexpr uint8_t DISPLAY_X {(DISPLAY_MAX_X - FONT_WIDTH * (BUFFERLENGTH - 1)) / 2};   // Column = X Coordinate
-// constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_HIGHT) / 2};                        // Row = Y coordinate
-constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_HIGHT) / 2};   // Row = Y coordinate
+constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_HIGHT) / 2};                        // Row = Y coordinate
 constexpr uint8_t MINUTES_LINE_X {DISPLAY_X};   // LINE = Coordinates for the line under minute and second digits
 constexpr uint8_t SECONDS_LINE_X {DISPLAY_X + FONT_WIDTH * 3};
 constexpr uint8_t LINE_Y {DISPLAY_Y + 2};        // Line below the numbers
