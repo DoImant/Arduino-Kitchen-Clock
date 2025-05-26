@@ -15,7 +15,7 @@
 #include <RotaryEncoder.h>
 #include "Button_SL.hpp"
 #include "KitchenTimer.hpp"
-#include "AlarmTone.hpp"
+#include "ToneSequence.hpp"
 
 // #define SH1106            // Remove the comment if the display has 1,3"
 // #define DISPLAY_Y32       // Remove the comment if the display has only 32 instead of 64 pixel lines
@@ -28,7 +28,7 @@
 
 // If the time is running ahead or behind, the inaccuracy of the oscillator can be compensated
 // somewhat via this "SECOND" value.
-constexpr uint16_t SECOND {997};   // 1000ms = 1 Second
+constexpr uint16_t SECOND {997};      // 1000ms = 1 Second
 constexpr uint16_t TIMEOUT {10000};
 
 constexpr uint8_t BUFFERLENGTH {6};   // 5 characters + end-of-string character '\0'.
@@ -51,25 +51,40 @@ constexpr uint8_t FONT_HIGHT {26};
 // The following display values are calculated from the upper four values. No change necessary.
 constexpr uint8_t DISPLAY_X {(DISPLAY_MAX_X - FONT_WIDTH * (BUFFERLENGTH - 1)) / 2};   // Column = X Coordinate
 constexpr uint8_t DISPLAY_Y {(DISPLAY_MAX_Y + FONT_HIGHT) / 2};                        // Row = Y coordinate
-constexpr uint8_t MINUTES_LINE_X {DISPLAY_X};   // LINE = Coordinates for the line under minute and second digits
+constexpr uint8_t MINUTES_LINE_X {DISPLAY_X};    // LINE = Coordinates for the line under minute and second digits
 constexpr uint8_t SECONDS_LINE_X {DISPLAY_X + FONT_WIDTH * 3};
 constexpr uint8_t LINE_Y {DISPLAY_Y + 2};        // Line below the numbers
 constexpr uint8_t LINE_WIDTH {FONT_WIDTH * 2};   // Line length = font width * 2
 
-#if defined(__AVR_ATtiny1604__)
-constexpr uint8_t PIN_BTN {0};     // SW on rotary encoder
-constexpr uint8_t PIN_IN1 {1};     // DT   ---- " ----
-constexpr uint8_t PIN_IN2 {2};     // CLK  ---- " ----
-constexpr uint8_t PIN_ALARM {3};   // Buzzer
+#if defined(__AVR_ATtiny1604__) || defined(__AVR_ATtiny1614__)
+constexpr uint8_t PIN_BTN {0};                   // SW on rotary encoder
+constexpr uint8_t PIN_IN1 {1};                   // DT   ---- " ----
+constexpr uint8_t PIN_IN2 {2};                   // CLK  ---- " ----
+constexpr uint8_t PIN_ALARM {3};                 // Buzzer
 #else
-constexpr uint8_t PIN_BTN {3};      // SW on rotary encoder
-constexpr uint8_t PIN_IN1 {4};      // DT   ---- " ----
-constexpr uint8_t PIN_IN2 {5};      // CLK  ---- " ----
+// constexpr uint8_t PIN_BTN {3};      // SW on rotary encoder
+// constexpr uint8_t PIN_IN1 {4};      // DT   ---- " ----
+// constexpr uint8_t PIN_IN2 {5};      // CLK  ---- " ----
+constexpr uint8_t PIN_BTN {4};      // SW on rotary encoder
+constexpr uint8_t PIN_IN1 {2};      // DT   ---- " ----
+constexpr uint8_t PIN_IN2 {3};      // CLK  ---- " ----
 constexpr uint8_t PIN_ALARM {13};   // Buzzer
 #endif
 
-constexpr uint16_t NOTE_F6 {1397};
-constexpr uint16_t NOTE_A6 {1760};
+//////////////////////////////////////////////////////////////////////////////
+/// \brief Helperclass for a non blocking delay
+///
+//////////////////////////////////////////////////////////////////////////////
+class NbDelay {
+  using MillisType = decltype(millis());
+
+public:
+  void start() { timestamp = millis(); }
+  boolean operator()(const MillisType duration) { return millis() - timestamp >= duration; }
+
+private:
+  MillisType timestamp {0};
+};
 
 //
 // Global objects / variables
@@ -94,11 +109,11 @@ struct InputState {
 #ifdef SH1106
 using OLED_DP = U8G2_SH1106_128X64_NONAME_1_HW_I2C;   // 1,3 Inch SH1106
 #else
-#ifndef DISPLAY_Y32
+  #ifndef DISPLAY_Y32
 using OLED_DP = U8G2_SSD1306_128X64_NONAME_1_HW_I2C;   // 0,96 Inch SSD1306
-#else
+  #else
 using OLED_DP = U8G2_SSD1306_128X32_UNIVISION_1_HW_I2C;   // 0,91 Inch SSD1306
-#endif
+  #endif
 #endif
 
 OLED_DP u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
@@ -107,28 +122,39 @@ enum class Underline : byte { no, yes };
 
 using namespace Btn;
 ButtonSL btn {PIN_BTN};
-TimerHelper wait;   // This class is defined in AlarmTone.hpp
+NbDelay wait;   // This class is defined in AlarmTone.hpp
 KitchenTimer ktTimer;
-AlarmTone alarm {PIN_ALARM};
+
+// note f7 has 2794Hz is good for buzzer with 2700Hz resonance frequency
+constexpr Note melody[] {
+    {note::f7, 1000 / 4 },
+    {0,        1000 / 20},
+    {note::f7, 1000 / 8 },
+    {0,        1000 / 20},
+    {note::f7, 1000 / 4 },
+    {0,        2000     },
+};
+// AlarmTone alarm {PIN_ALARM};
+ToneSequence<PIN_ALARM> signal;
 
 //
 // Forward declaration function(s).
 //
 void intWakeup();
 void powerDown(uint8_t wakeupPin);
-KitchenTimerState runTimer(KitchenTimer &);
-bool askEncoder(RotaryEncoder &, KitchenTimer &);
-bool processInput(KitchenTimer &, InputState &);
-void displayTime(KitchenTimer &, Underline);
-void setDisplayForInput(KitchenTimer &kT, InputState &iS);
-void askRtButton(ButtonSL &, KitchenTimer &, InputState &);
+KitchenTimerState runTimer(KitchenTimer&);
+bool askEncoder(RotaryEncoder&, KitchenTimer&);
+bool processInput(KitchenTimer&, InputState&);
+void displayTime(KitchenTimer&, Underline);
+void setDisplayForInput(KitchenTimer& kT, InputState& iS);
+void askRtButton(ButtonSL&, KitchenTimer&, InputState&);
 
 //////////////////////////////////////////////////////////////////////////////
 /// @brief Initialization part of the main program
 ///
 //////////////////////////////////////////////////////////////////////////////
 void setup(void) {
-  // Serial.begin(115200);
+  Serial.begin(115200);
 
   // Prepare controller for sleep mode
 #if defined(__AVR_ATtiny1604__)
@@ -174,19 +200,23 @@ void loop() {
         if (wait(TIMEOUT)) {
           pinMode(PIN_ALARM, OUTPUT);   // Saves power
           powerDown(PIN_BTN);
-          wait.start();   // Start timer so that the display does not go off immediately after wake up
-          delay(1000);    // A delay so that the minute/second changeover is not triggered immediately after waking up.
+          wait.start();                 // Start timer so that the display does not go off immediately after wake up
+          delay(1000);   // A delay so that the minute/second changeover is not triggered immediately after waking up.
         }
       }
       break;
     case KitchenTimerState::alarm:
-      alarm.playAlarm();
-      if (btn.tick() != ButtonState::notPressed) {   // Switch alarm off with encoder button
+      !signal(melody) && signal.reset();      // plays a melody as long as signal returns true else reset sequence
+      ButtonState tmp = btn.tick();
+      if (tmp != ButtonState::notPressed) {   // Switch alarm off with encoder button
         setDisplayForInput(ktTimer, input);
+        signal.stop();
       }
       if (askEncoder(input.encoder, ktTimer)) {   // Switch alarm off with encoder rotation
         ktTimer.setSeconds(0);                    // Reset count from rotation
         setDisplayForInput(ktTimer, input);
+        signal.stop();
+        Serial.println("ENC Alarm stop");
       }
       wait.start();   // Start timer so that the display does not go off immediately after the alarm is turned off.
       break;
@@ -228,7 +258,7 @@ void powerDown(uint8_t wakeupPin) {
 /// @param kT Reference on kitchen timer object
 /// @return KitchenTimerState
 //////////////////////////////////////////////////////////////////////////////
-KitchenTimerState runTimer(KitchenTimer &kT) {
+KitchenTimerState runTimer(KitchenTimer& kT) {
   if (kT(SECOND)) {
     --kT;
     switch (kT.timeIsUp()) {
@@ -248,7 +278,7 @@ KitchenTimerState runTimer(KitchenTimer &kT) {
 /// @return true  if the an encoder signal was evaluated
 /// @return false if no encoder signal was evaluated
 //////////////////////////////////////////////////////////////////////////////
-bool askEncoder(RotaryEncoder &enc, KitchenTimer &kT) {
+bool askEncoder(RotaryEncoder& enc, KitchenTimer& kT) {
   uint8_t flag {true};
   enc.tick();
   switch (enc.getDirection()) {
@@ -267,7 +297,7 @@ bool askEncoder(RotaryEncoder &enc, KitchenTimer &kT) {
 /// @return true when the encoder has been actuated
 /// @return false if no encoder operation has occurred
 //////////////////////////////////////////////////////////////////////////////
-bool processInput(KitchenTimer &kT, InputState &iS) {
+bool processInput(KitchenTimer& kT, InputState& iS) {
   bool encoderActuated {true};
   if (iS.lastState != iS.currentState) {
     switch (iS.currentState) {
@@ -293,7 +323,7 @@ bool processInput(KitchenTimer &kT, InputState &iS) {
 /// @param kT Reference on kitchen timer object
 /// @param iS Reference on input state structure
 //////////////////////////////////////////////////////////////////////////////
-void setDisplayForInput(KitchenTimer &kT, InputState &iS) {
+void setDisplayForInput(KitchenTimer& kT, InputState& iS) {
   ktTimer.setState(KitchenTimerState::off);
   iS.lastState =
       (iS.defaultState == InputState::state::seconds) ? InputState::state::minutes : InputState::state::seconds;
@@ -308,7 +338,7 @@ void setDisplayForInput(KitchenTimer &kT, InputState &iS) {
 /// @param underline If Underline::yes, a line will be displayed under the digits
 ///                  active for the input. If "no", then no line is displayed.
 //////////////////////////////////////////////////////////////////////////////
-void displayTime(KitchenTimer &kT, Underline underline) {
+void displayTime(KitchenTimer& kT, Underline underline) {
   char charBuffer[BUFFERLENGTH];
   sprintf(charBuffer, "%02d:%02d", kT.getMinutes(), kT.getSeconds());
   u8g2.firstPage();
@@ -327,17 +357,18 @@ void displayTime(KitchenTimer &kT, Underline underline) {
 //////////////////////////////////////////////////////////////////////////////
 /// @brief Query of the encoder's wakeupPin function
 ///
-/// @param b Reference on wakeupPin object
+/// @param b Reference on button object
 /// @param kT Reference on kitchen timer object
 /// @param iS Reference on input state structure
 //////////////////////////////////////////////////////////////////////////////
-void askRtButton(ButtonSL &b, KitchenTimer &kT, InputState &iS) {
+void askRtButton(ButtonSL& b, KitchenTimer& kT, InputState& iS) {
+
   switch (b.tick()) {
     // If the wakeupPin is pressed for a long time, it switches between timer active and timer off.
     case ButtonState::notPressed: break;
     case ButtonState::longPressed:
       if (!kT.timeIsUp()) {   // Switch on timer only if a time iS set.
-        tone(PIN_ALARM, NOTE_A6, 30);
+        tone(PIN_ALARM, note::a6, 30);
         switch (kT.getState()) {
           case KitchenTimerState::active: setDisplayForInput(ktTimer, input); break;
           case KitchenTimerState::off:
@@ -349,16 +380,15 @@ void askRtButton(ButtonSL &b, KitchenTimer &kT, InputState &iS) {
           case KitchenTimerState::alarm: break;
         }
       }
-      break;
     case ButtonState::shortPressed:
       if (kT.getState() == KitchenTimerState::active) { break; }
       switch (iS.currentState) {
         case InputState::state::seconds:
-          tone(PIN_ALARM, NOTE_F6, 30);
+          tone(PIN_ALARM, note::a6, 30);
           iS.currentState = InputState::state::minutes;
           break;
         case InputState::state::minutes:
-          tone(PIN_ALARM, NOTE_F6, 30);
+          tone(PIN_ALARM, note::a6, 30);
           iS.currentState = InputState::state::seconds;
           break;
         default: break;
